@@ -40,13 +40,6 @@ public List<Activity> getAvailableActivities() {
 ```
 - Retorna lista de atividades disponíveis baseada no nível atual
 
-**Uso prático:**
-- Armazenar atividades de cada nível
-- Gerenciar habilidades ganhas por atividade
-- Remover atividades completadas dinamicamente
-
----
-
 ### 2️⃣ **Tratamento de Exceções** ✅
 
 #### **Arquivo: `System/Exceptions.java`**
@@ -65,16 +58,6 @@ static public int InputInterger(Scanner input){
 ```
 **Tratamento:** Captura `InputMismatchException` quando o usuário digita texto em vez de número.
 
-#### **Arquivo: `System/Controller.java`**
-```java
-while (choose < 0 || choose >= size_Activities) {
-    CLI.underscore();
-    GUI.ShowMessageAlert("OPÇAO INVALIDA");
-    choose = ex.InputInterger(input) - 1;
-}
-```
-**Validação:** Previne seleção de atividades inexistentes (índice fora do intervalo).
-
 #### **Arquivo: `Utils/Structure/Support.java`**
 ```java
 try {
@@ -85,6 +68,29 @@ try {
 }
 ```
 **Tratamento:** Captura `InterruptedException` durante operações de sleep.
+
+#### **Arquivo: `Exceptions.java` - Abertura de Links**
+```java
+static public void OpenLinkStardewVally(){
+    try{
+        URI link = new URI("https://pt.stardewvalleywiki.com/Stardew_Valley_Wiki");
+        if (Desktop.isDesktopSupported()) {
+            Desktop.getDesktop().browse(link);
+        } else {
+            System.out.println("Não é possível abrir o navegador no seu sistema.");
+        }
+    }catch (Exception e){
+        System.out.println("Erro para acessar" + e.getMessage() );
+    }
+}
+```
+**Tratamento:** Captura exceções ao tentar abrir URLs externas no navegador.
+
+**Casos tratados:**
+- ✅ Entrada inválida de números
+- ✅ Erros de limpeza de tela
+- ✅ Interrupção de threads
+- ✅ Falhas ao abrir links externos
 
 ---
 
@@ -258,11 +264,136 @@ public String getName() { return name; }
 public ArrayList<Activity> getActivities() { return activities; }
 ```
 
-**Benefícios do encapsulamento:**
-- ✅ Proteção dos dados internos
-- ✅ Controle de acesso aos atributos
-- ✅ Validação em setters (ex: `setLevel` atualiza dados automaticamente)
-- ✅ Uso de `final` para dados imutáveis
+---
+
+## 🎁 Sistema de Final Alternativo (Easter Egg)
+
+O jogo possui um **final alternativo secreto** inspirado em **Stardew Valley**, implementado através do sistema de probabilidade.
+
+### 🎲 **Como Funciona**
+
+#### **Arquivo: `System/Controller.java`**
+```java
+static public boolean Probability_Showing_Letter(String name){
+    boolean choose = false;
+    int num_rand = rand.nextInt(1) + 1; // Gera número de 1 a 1
+    int num_acerto = 1;
+
+    if(num_rand == num_acerto){
+        choose = GUI.showCarta(name);
+    }
+
+    return choose;
+}
+```
+
+**Mecânica:**
+- A cada atividade completada, há uma chance **extremamente rara** de aparecer uma carta misteriosa
+- O sistema gera um número aleatório e compara com o número de acerto
+- Se houver match, a interface gráfica exibe a carta da vovó
+
+### 📜 **A Carta da Vovó**
+
+#### **Arquivo: `Utils/Menu/GUI.java`**
+```java
+public static boolean showCarta(String nome) {
+    AtomicBoolean go_place = new AtomicBoolean(false);
+    
+    JFrame frame = new JFrame("Convite");
+    // ... criação da interface gráfica
+    
+    JLabel labelInformation = new JLabel(
+        "<html>" +
+        "Se você está lendo isso, significa que você está desesperado por uma mudança na sua vida.<br><br>" +
+        "Há muito tempo atrás, o mesmo aconteceu comigo. Eu perdi de vista o que mais importa na vida: " +
+        "vínculos concretos com a natureza e outras pessoas. Foi então que decidi largar tudo e me mudar " +
+        "para o meu verdadeiro lar.<br><br>" +
+        "Em anexo você encontrará a escritura para esse lugar… meu orgulho e alegria: O Sítio do Pica-pau Amarelo.<br>" +
+        "Ele fica no Vale do Orvalho, no litoral sul. É perfeito para começar a sua nova vida. " +
+        "O meu bem mais precioso agora é seu. Eu sei que você vai honrar a nossa família, meu garoto. Boa sorte.<br><br>" +
+        "Com amor,<br>" +
+        "Vovó<br><br>" +
+        "P.S.: Se o Lewis ainda estiver vivo, mande um Oi pelo seu corôa, tá?" +
+        "</html>"
+    );
+    
+    // Retorna true se jogador aceitar ir para o sítio
+    return go_place.get();
+}
+```
+
+**Elementos da Interface:**
+- ✉️ **Design temático:** Fundo escuro com bordas verdes
+- 🎨 **Estilização:** Uso de HTML no JLabel para formatação rica de texto
+- 🖱️ **Duas opções interativas:**
+  - **"Ir para o Sítio"** - Botão verde que aceita o convite
+  - **"Continuar na Carreira de Programador"** - Botão vermelho que recusa
+
+### 🌾 **Desfecho Alternativo**
+
+#### **Arquivo: `System/MainProgram.java`**
+```java
+do {
+    CLI.Lobby_Information(controller.player);
+    CLI.Show_Activitys(controller.level_current.getActivities());
+    controller.Choose_Activity();
+    go_place = Controller.Probability_Showing_Letter(controller.player.getName());
+} while(controller.player.getLevel() < 7 && !go_place);
+
+if(go_place){
+    GUI.ShowMessageAlert("VOCE ESCOLHEU O FINAL ALTERNATIVO");
+    Exceptions.OpenLinkStardewVally();
+} else {
+    GUI.ShowMessageAlert("PARABENS CEO!");
+}
+```
+
+**Fluxo do Final Alternativo:**
+1. 🎲 Durante o jogo, a carta pode aparecer aleatoriamente
+2. 📖 O jogador lê a história emocionante da vovó
+3. 🤔 Deve escolher entre **continuar programando** ou **ir para o sítio**
+4. 🌾 Se aceitar, o jogo **termina antecipadamente**
+5. 🌐 O navegador abre automaticamente no **Stardew Valley Wiki**
+
+#### **Arquivo: `System/Exceptions.java`**
+```java
+static public void OpenLinkStardewVally(){
+    try{
+        URI link = new URI("https://pt.stardewvalleywiki.com/Stardew_Valley_Wiki");
+        if (Desktop.isDesktopSupported()) {
+            Desktop.getDesktop().browse(link);
+        } else {
+            System.out.println("Não é possível abrir o navegador no seu sistema.");
+        }
+    }catch (Exception e){
+        System.out.println("Erro para acessar" + e.getMessage() );
+    }
+}
+```
+
+### 📊 **Diagrama de Fluxo do Easter Egg**
+
+Jogador completa atividade
+         ↓
+Probability_Showing_Letter()
+         ↓
+    Sorteio (1/100)
+         ↓
+   ┌─────┴─────┐
+   │           │
+Falha       Sucesso
+   │           │
+   │      showCarta()
+   │           │
+   │    ┌──────┴──────┐
+   │    │             │
+   │  Recusa       Aceita
+   │    │             │
+   └────┤        go_place = true
+        │             │
+   Continua    OpenLinkStardewVally()
+    Jogo            ↓
+                Fim do Jogo
 
 ---
 
@@ -288,10 +419,18 @@ public ArrayList<Activity> getActivities() { return activities; }
 └── 📁 legacy/              # Código antigo (não usado)
 ```
 
-## 🔍 Screeshots
+---
 
-## **Interface de Introduçao**
-![Interface de Introduçao](Screenshots_da_interface_introdutoria.png)
+## 🔍 Screenshots
+
+### **Interface de Introdução**
+![Interface de Introdução](Screenshot_da_interface_introdutoria.png)
+
+### **Convite da Vovó (Easter Egg)**
+![Convite](Screenshots_do_convite.png)
+
+### **Interface de Interação**
+![Interface de Interação](Screeshot_interface_de_Interacao.png)
 
 ---
 
@@ -310,6 +449,7 @@ public ArrayList<Activity> getActivities() { return activities; }
    - 💪 Pontos de habilidade
 4. Suba de nível ao acumular XP suficiente
 5. Desbloqueie novas atividades
+6. 🎁 **Fique atento à carta misteriosa da vovó!**
 
 ### **Habilidades**
 - 🌐 **Network** - Conexões profissionais
@@ -339,7 +479,8 @@ public ArrayList<Activity> getActivities() { return activities; }
 
 - **Linguagem:** Java 24
 - **GUI:** Java Swing
-- **Estruturas:** ArrayList, Enum
+- **Estruturas:** ArrayList, Enum, Random, AtomicBoolean
+- **APIs:** Desktop (java.awt), URI
 - **IDE:** IntelliJ IDEA
 
 ---
@@ -356,16 +497,20 @@ Escolher Atividade → Executar Atividade → Ganhar XP + Skills
   ↓                                              ↓
   ←──────────────────────────────────────────────┘
   ↓
-XP >= XP Necessário? → Level Up! → Nível < 8?
+Verificar Carta da Vovó (Easter Egg)
+  ↓
+  ├─→ Aceita Convite → Fim Alternativo (Stardew Valley)
+  │
+  └─→ Recusa/Não Aparece
+       ↓
+XP >= XP Necessário? → Level Up! → Nível < 7?
   |                                       ↓
   |                                    Continuar
   ↓
-Fim do Jogo
+Fim do Jogo (CEO)
 ```
 
----
-
-## 🎯 Exemplos de Atividades (serão mudada por haver Inconsistências)
+## 🎯 Exemplos de Atividades 
 
 ### **Nível ESTUDANTE**
 - ✏️ Praticar lógica de programação (+5 XP)
@@ -377,10 +522,11 @@ Fim do Jogo
 - 🔍 Realizar análise de incidente com RCA (+18 XP)
 - 📝 Escrever ADRs técnicos (+16 XP)
 
-
 ---
 
 ## 👨‍💻 Autores
 
-Alunos da UNIVERSIDADE CATOLICA DE PERNAMBUCO - UNICAP: Inaldo josé do Nascimento e Lucas da Silva Soares
- 
+Alunos da **UNIVERSIDADE CATÓLICA DE PERNAMBUCO - UNICAP**: 
+- Inaldo José do Nascimento
+- Lucas da Silva Soares
+
